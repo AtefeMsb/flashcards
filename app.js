@@ -7,76 +7,18 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false}));
 app.use(cookieParser());
-
-app.use(function (req, res, next) {
-    req.context = {
-        coder: 'atefe',
-        site: 'USA'
-    };
-    next && next();
-});
-
-app.use((req, res, next) => {
-    // using property to send message between middlewares
-    req.message = 'This message made it';
-    next();
-});
-
-app.use((req, res, next) => {
-    console.log('message from previous middleware: ', req.message);
-    next();
-});
-
-
-const colors = [
-    'red',
-    'orange',
-    'yellow',
-    'green',
-    'blue',
-    'purple'
-];
+app.use('/static', express.static('public'));
 
 app.set('view engine', 'pug');
 
-// to create route
-app.get('/', (req, res) => {
-    console.log("req.context", req.context);
-    const name = req.cookies.username;
-    // ES6 object shorthhand: if key : value are the same, no need to use colomn syntax.
-    if (name) {
-        res.render('index', { name });
-    } else {
-        res.redirect('/hello');
-    }
-});
+const mainRoutes = require('./routes'); // this going to run index.js in routes folder.
+const cardRoutes = require('./routes/cards');
 
-app.get('/cards', (req, res) => {
-    res.render('card', { prompt: "Who is buried in Grant'a tomb?", colors, hint: "some hint to help you"});
-});
+app.use(mainRoutes);
+// add path as first argument to mount those routes to
+app.use('/cards', cardRoutes); //cardroutes variable
 
-app.get('/hello', (req, res) => {
-    const name = req.cookies.username;
-    if (name) {
-        res.redirect('/');
-    } else {
-        res.render('hello');
-    }
-});
-
-app.post('/hello', (req, res) => {
-    console.dir(req.body);
-    // sends a cookie to browser after form was submitted
-    res.cookie('username', req.body.username);
-    res.redirect('/');
-
-});
-
-app.post('/goodbye', (req, res) => {
-    res.clearCookie('username');
-    res.redirect('/hello');
-});
-
+// Not Found page
 app.use((req, res, next) => {
     const err = new Error('Not Found');
     err.status = 404;
@@ -94,4 +36,3 @@ app.use((err, req, res, next) => {
 app.listen(3000, () => {
     console.log('The application is running on local host! 3000');
 });
-
